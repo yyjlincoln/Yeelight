@@ -39,7 +39,6 @@ class Discover(YeelightBaseObject):
                     self.response = True
                     self._handleResponse(res)
                 except socket.timeout:
-                    print('timeout')
                     break
             counter += 1
             if counter > retries or self.response or self.killswitch:
@@ -59,8 +58,7 @@ class Discover(YeelightBaseObject):
         # assert 'model' in res
         # assert 'support' in res
         supportedFunctions = res['support'].split(' ')
-
-        res['support'] = supportedFunctions
+        res['methods'] = supportedFunctions
 
         self.discovered[res[self.pk]] = self.createNew(**res)
 
@@ -71,16 +69,22 @@ class Discover(YeelightBaseObject):
         res = res.decode().split('\r\n')
         parsed = {}
         for x in res:
-            x = x.split(':')
+            x = x.split(':', 1)
             try:
                 parsed[x[0].strip()]=x[1].strip()
             except:
                 continue
         print(parsed)
         return parsed
+    
+    def kill(self):
+        self.killswitch = True
 
 
 a = Discover(WifiBulbConfig)
 
 a.discover()
 print(a.discovered)
+for x in a.discovered:
+    print(x, a.discovered[x].Location)
+    a.discovered[x].sendCommand(1,'set_bright',[80,'sudden',30])

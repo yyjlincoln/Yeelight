@@ -3,9 +3,16 @@ from abc import abstractclassmethod
 
 class WifiBulb(YeelightDevice):
     # Refer to YeelightDevice class.
+    def __init__(self, **kw):
+        self.id = None
+        super().__init__(**kw)
+
     def __repr__(self):
-        return 'Wifi Bulb'
-    pass
+        return f'<Wifi Bulb Object: {str(self.id)}>'
+
+    def __str__(self):
+        return f'<Wifi Bulb Object: {str(self.id)}>'
+
 
 class WifiBulbConfig(YeelightDeviceConfiguration):
     deviceType = 'wifi_bulb'
