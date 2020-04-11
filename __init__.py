@@ -1,0 +1,2 @@
+from Yeelight import *
+
