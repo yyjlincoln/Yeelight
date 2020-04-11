@@ -18,10 +18,7 @@ class YeelightDevice(YeelightBaseObject):
         # Add attributes
         for x in kw:
             setattr(self, x, kw[x])
-    
-    # def __iter__(self):
-    #     return iter(self.__dict__)
-    
+
     def __str__(self):
         return str('YeelightDevice Object. This function should be overwritten.')
     
@@ -29,7 +26,18 @@ class YeelightDevice(YeelightBaseObject):
         # self.__dict__
         return str('YeelightDevice Object. This function should be overwritten.')
     
-    def sendCommand(self, id, method, params):
+    def _connectToDevice(self):
+        # Get the address of the light
+        tmp = self.Location.replace('yeelight://','')
+        addr, port = tmp.split(':')
+        port = int(port)
+
+        # Perform connection
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((addr, port))
+        return s
+
+    def sendCommand(self, id, method, params, autoDisconnect = True, useExistingSocket = False):
         assert isinstance(params, list)
         assert isinstance(id, int)
         assert isinstance(method, str)
@@ -43,23 +51,22 @@ class YeelightDevice(YeelightBaseObject):
         })
         cmd+='\r\n'
 
-        # Get the address of the light
-        tmp = self.Location.replace('yeelight://','')
-        addr, port = tmp.split(':')
-        port = int(port)
-
         # Initialize the connection
+        if not useExistingSocket:
+            s = self._connectToDevice()
+        else:
+            s = useExistingSocket
 
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((addr, port))
         s.send(cmd.encode())
         res = s.recv(2048)
-        s.shutdown(socket.SHUT_RDWR)
-        s.close()
+        if autoDisconnect:
+            s.shutdown(socket.SHUT_RDWR)
+            s.close()
+            s = None
         if res:
-            return res
+            return res, s
         else:
-            return None
+            return None, s
 
     pass
 

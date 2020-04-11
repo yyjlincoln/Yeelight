@@ -80,11 +80,3 @@ class Discover(YeelightBaseObject):
     def kill(self):
         self.killswitch = True
 
-
-a = Discover(WifiBulbConfig)
-
-a.discover()
-print(a.discovered)
-for x in a.discovered:
-    print(x, a.discovered[x].Location)
-    a.discovered[x].sendCommand(1,'set_bright',[80,'sudden',30])
