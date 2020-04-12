@@ -2,6 +2,8 @@ import socket
 from socket import socket as Socket
 from base import YeelightBaseObject, YeelightBaseException, YeelightDevice, YeelightDeviceConfiguration
 from devicesdef import WifiBulb, WifiBulbConfig
+import logger
+from logger import log
 
 class Discover(YeelightBaseObject):
     def __init__(self, YeelightDeviceConfigurationObject):
@@ -26,16 +28,21 @@ class Discover(YeelightBaseObject):
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
 
+        logger.log('Now searching for devices...')
+
         counter = 0
         while True:
             s.sendto(msg.encode(), (self.host, self.port))
+            logger.log('M-Search sent, awaiting response...')
             s.settimeout(1)
             while True:
                 try:
                     if self.killswitch:
+                        logger.log('Killswitch activated. Stop searching...')
                         break
 
                     res = s.recv(2048)
+                    logger.log('Response received.')
                     self.response = True
                     self._handleResponse(res)
                 except socket.timeout:
@@ -45,9 +52,9 @@ class Discover(YeelightBaseObject):
                 break
         
         if self.response:
-            print('Success')
+            return self.discovered
         else:
-            print('Failed')
+            return {}
     
     def _handleResponse(self, res):
         res = self._parseHeaders(res)
@@ -55,15 +62,11 @@ class Discover(YeelightBaseObject):
         assert 'Location' in res
         # Yeelight specific
         assert self.pk in res
-        # assert 'model' in res
-        # assert 'support' in res
         supportedFunctions = res['support'].split(' ')
         res['methods'] = supportedFunctions
 
         self.discovered[res[self.pk]] = self.createNew(**res)
-
-
-
+        logger.log('Device '+res[self.pk]+' added.')
 
     def _parseHeaders(self, res):
         res = res.decode().split('\r\n')
@@ -74,7 +77,6 @@ class Discover(YeelightBaseObject):
                 parsed[x[0].strip()]=x[1].strip()
             except:
                 continue
-        print(parsed)
         return parsed
     
     def kill(self):
