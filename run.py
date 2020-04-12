@@ -1,77 +1,71 @@
 import time
 from devicesdef import WifiBulbConfig, WifiBulb
 from discover import Discover
+from music import MusicServer
+import logger
 
-a = Discover(WifiBulbConfig)
+# Discover a device
+Discoverer = Discover(WifiBulbConfig)
+Devices = Discoverer.discover()
+if Devices:
+    # Pick the first one
+    Device = next(iter(Devices.values())) 
+    
+    # Turn on the first device
+    Device.set_power('on')
 
-discovered = a.discover()
+    # Set the first device to white, 5400k colortemp
+    Device.set_ct_abx(5400)
 
-for x in discovered:
-    x = discovered[x]
+    # Set the first device to red
+    Device.set_rgb(255,0,0)
 
-# x.set_power('off')
+    # Set the first device to blue
+    Device.set_rgb(0,0,255)
 
-# import random
-# while True:
-#     x.set_rgb(random.randint(0,255),random.randint(0,255),random.randint(0,255), smooth = False, duration = 50)
-#     time.sleep(1)
-# x.set_power('off')
-# print(x.sendCommand('set_musi',[0]))
-# 
-# print(x.set_music(1, '192.168.20.4',54302))
-# print(x.get_prop(['music_on']))
-# print(x.set_music(0, None, None))
+    # Start a color flow
+    flow = [
+        {
+            'duration':500,
+            'mode':'rgb',
+            'red':255,
+            'green':0,
+            'blue':0,
+            'brightness':100
+        },{
+            'duration':500,
+            'mode':'rgb',
+            'red':0,
+            'green':0,
+            'blue':255,
+            'brightness':100
+        }
+    ]
+    Device.start_cf(10,0,flow)
 
-# x.set_power('off')
+    # Wait for the color flow to finish
+    time.sleep(5)
 
-# x.set_scene({
-#     'class': 'cf',
-    # 'flow': [
-    #     {
-    #         'duration': 3000,
-    #         'mode': 'rgb',
-    #         'red': 255,
-    #         'green': 0,
-    #         'blue': 0,
-    #         'brightness': 100
-    #     }, {
-    #         'duration': 3000,
-    #         'mode': 'rgb',
-    #         'red': 0,
-    #         'green': 255,
-    #         'blue': 0,
-    #         'brightness': 50
-    #     }, {
-    #         'duration': 3000,
-    #         'mode': 'white',
-    #         'colortemp': 2700,
-    #         'brightness': 100
-    #     }
-    # ],
-#     'count':2,
-#     'action':2
-# })
-x.set_music(0)
-# x.toggle()
-# print(x.start_cf(10, 0, [
-#     {
-#         'duration':3000,
-#         'mode':'rgb',
-#         'red':255,
-#         'green':0,
-#         'blue':0,
-#         'brightness':100
-#     },{
-#         'duration':3000,
-#         'mode':'rgb',
-#         'red':0,
-#         'green':255,
-#         'blue':0,
-#         'brightness':50
-#     },{
-#         'duration':3000,
-#         'mode':'white',
-#         'colortemp':2700,
-#         'brightness':100
-#     }
-# ]))
+    # Before music mode, need to start the server
+    Server = MusicServer(port = 10800)
+    Server.launch()
+
+    # Now, tell the device to connect
+    Device.set_music(1,'192.168.20.4', 10800)
+
+    # Then, at the server side, we need to get the connected device
+    MusicControlSocket = Server.next_device(Device)
+
+    # Try something with music mode
+    import random
+    for x in range(10):
+        MusicControlSocket.set_rgb(random.randint(1,255),random.randint(1,255),random.randint(1,255))
+    
+    # Stop music mode
+    Device.set_music(0)
+
+    # Toggle the device (which should turn it off)
+    Device.toggle()
+
+else:
+    logger.info('No device found!')

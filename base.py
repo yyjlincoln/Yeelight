@@ -173,6 +173,18 @@ class YeelightDevice(YeelightBaseObject):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((addr, port))
         return s
+    
+    def disconnect_music(self):
+        if self.musicMode:
+            if self.musicCtl:
+                try:   
+                    self.musicCtl.shutdown(socket.SHUT_RDWR)
+                    self.musicCtl.close()
+                    return True
+                except:
+                    return False
+        return False
+                
 
     def sendCommand(self, method, params, id=0, autoDisconnect=True, useExistingSocket=False, autoIDVerification=True, wait = 0):
         assert isinstance(params, list)
