@@ -441,7 +441,22 @@ class YeelightDevice(YeelightBaseObject):
     def set_scene(self, scene,  autoDisconnect = True, useExistingSocket = False, wait = True):
         sclass, val1, val2, val3 = self.parse_scene(scene)
         return self._set_scene(sclass, val1, val2, val3, autoDisconnect = autoDisconnect, useExistingSocket = useExistingSocket, wait = wait)
+    
+    def _cron_add(self, stype, minutes,  autoDisconnect = True, useExistingSocket = False, wait = True):
+        'Currently type can only be 0 - power off'
+        r, sx = self.sendCommand('cron_add', [stype, minutes], autoDisconnect=autoDisconnect, useExistingSocket=useExistingSocket, wait = 0 if wait else 0)       
 
+        if r:
+            if r['result'][0] == 'ok':
+                return True, sx
+        return False, sx
+    
+    def delay_off(self, minutes):
+        return self._cron_add(0, minutes)
+    
+    # Cron_get
+    # Cron_del
+    # Set_adjust
 
 class YeelightDeviceConfiguration(YeelightBaseObject):
     'The Configuration of a Device.'
