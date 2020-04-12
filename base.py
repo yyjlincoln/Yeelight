@@ -2,6 +2,7 @@ from abc import abstractclassmethod
 import socket
 import json
 import random
+import time
 
 
 class YeelightBaseObject(object):
@@ -170,7 +171,7 @@ class YeelightDevice(YeelightBaseObject):
         s.connect((addr, port))
         return s
 
-    def sendCommand(self, method, params, id=0, autoDisconnect=True, useExistingSocket=False, autoIDVerification=True):
+    def sendCommand(self, method, params, id=0, autoDisconnect=True, useExistingSocket=False, autoIDVerification=True, wait = 0):
         assert isinstance(params, list)
         assert isinstance(id, int)
         assert isinstance(method, str)
@@ -211,16 +212,17 @@ class YeelightDevice(YeelightBaseObject):
         
         if 'error' in res:
             raise YeelightDeviceException('Device raised an exception ('+str(method)+'): '+ str(res['error']) + ' with original params '+str(params))
-
+        
+        time.sleep(wait * 0.001)
         if res:
             return res, s
         else:
             return None, s
         
 
-    def get_prop(self, propname, autoDisconnect=True, useExistingSocket=False):
+    def get_prop(self, propname, autoDisconnect=True, useExistingSocket=False, wait = True):
         r, sx = self.sendCommand('get_prop', list(
-            propname), autoDisconnect=autoDisconnect, useExistingSocket=useExistingSocket)
+            propname), autoDisconnect=autoDisconnect, useExistingSocket=useExistingSocket, wait = 0 if wait else 0)
 
         if len(r['result']) != len(propname):
             raise YeelightUnexcepted(
@@ -236,26 +238,128 @@ class YeelightDevice(YeelightBaseObject):
 
         return pack, sx
 
-    def set_ct_abx(self, colortemp, smooth=True, duration=500, autoDisconnect=True, useExistingSocket=False):
+    def set_ct_abx(self, colortemp, smooth=True, duration=500, autoDisconnect=True, useExistingSocket=False, wait = True):
         r, sx = self.sendCommand('set_ct_abx', [colortemp, 'smooth' if smooth else 'sudden', duration if duration >=
-                                                30 else 30], autoDisconnect=autoDisconnect, useExistingSocket=useExistingSocket)
+                                                30 else 30], autoDisconnect=autoDisconnect, useExistingSocket=useExistingSocket, wait = duration if wait else 0)
         if r:
             if r['result'][0] == 'ok':
                 return True, sx
         return False, sx
 
-    def _set_rgb(self, rgbvalue, smooth=True, duration=500, autoDisconnect=True, useExistingSocket=False):
+    def _set_rgb(self, rgbvalue, smooth=True, duration=500, autoDisconnect=True, useExistingSocket=False, wait = True):
         # This is the original function for setrgb
         r, sx = self.sendCommand('set_rgb', [rgbvalue, 'smooth' if smooth else 'sudden', duration if duration >=
-                                                30 else 30], autoDisconnect=autoDisconnect, useExistingSocket=useExistingSocket)
+                                                30 else 30], autoDisconnect=autoDisconnect, useExistingSocket=useExistingSocket, wait = duration if wait else 0)
         if r:
             if r['result'][0] == 'ok':
                 return True, sx
         return False, sx
 
-    def set_rgb(self, red, green, blue, smooth=True, duration=500, autoDisconnect=True, useExistingSocket=False):
-        r, sx = self._set_rgb(red*65536 + green*256 + blue, smooth, duration, autoDisconnect = autoDisconnect, useExistingSocket = useExistingSocket)
+    def set_rgb(self, red, green, blue, smooth=True, duration=500, autoDisconnect=True, useExistingSocket=False, wait = True):
+        r, sx = self._set_rgb(red*65536 + green*256 + blue, smooth, duration, autoDisconnect = autoDisconnect, useExistingSocket = useExistingSocket, wait=wait)
         return r, sx
+    
+    def set_hsv(self, hue, sat, smooth = True, duration = 500, autoDisconnect = True, useExistingSocket = False, wait = True):
+        r, sx = self.sendCommand('set_hsv', [hue, sat, 'smooth' if smooth else 'sudden', duration if duration >=
+                                                30 else 30], autoDisconnect=autoDisconnect, useExistingSocket=useExistingSocket, wait = duration if wait else 0)       
+        if r:
+            if r['result'][0] == 'ok':
+                return True, sx
+        return False, sx
+    
+    def set_bright(self, brightness, smooth = True, duration = 500, autoDisconnect = True, useExistingSocket = False, wait = True):
+        r, sx = self.sendCommand('set_bright', [brightness, 'smooth' if smooth else 'sudden', duration if duration >=
+                                                30 else 30], autoDisconnect=autoDisconnect, useExistingSocket=useExistingSocket, wait = duration if wait else 0)       
+        if r:
+            if r['result'][0] == 'ok':
+                return True, sx
+        return False, sx
+
+    def set_power(self, power, mode = 0, smooth = True, duration = 500, autoDisconnect = True, useExistingSocket = False, wait = True):
+        r, sx = self.sendCommand('set_power', [power, 'smooth' if smooth else 'sudden', duration if duration >=
+                                                30 else 30, mode], autoDisconnect=autoDisconnect, useExistingSocket=useExistingSocket, wait = duration if wait else 0)       
+        if r:
+            if r['result'][0] == 'ok':
+                return True, sx
+        return False, sx
+    
+    def toggle(self, autoDisconnect = True, useExistingSocket = False, wait = True):
+        r, sx = self.sendCommand('toggle', [], autoDisconnect=autoDisconnect, useExistingSocket=useExistingSocket, wait = 30 if wait else 0)       
+
+        if r:
+            if r['result'][0] == 'ok':
+                return True, sx
+        return False, sx
+    
+    def set_default(self, autoDisconnect = True, useExistingSocket = False, wait = True):
+        # Save the current state
+        r, sx = self.sendCommand('set_default', [], autoDisconnect=autoDisconnect, useExistingSocket=useExistingSocket, wait = 0 if wait else 0)       
+
+        if r:
+            if r['result'][0] == 'ok':
+                return True, sx
+        return False, sx
+    
+    def _start_cf(self, count, action, flow_expression ,autoDisconnect = True, useExistingSocket = False, wait = True):
+        r, sx = self.sendCommand('start_cf', [count, action, flow_expression], autoDisconnect=autoDisconnect, useExistingSocket=useExistingSocket, wait = 0 if wait else 0)       
+
+        if r:
+            if r['result'][0] == 'ok':
+                return True, sx
+        return False, sx
+    
+    def start_cf(self, count, action, flow, autoDisconnect = True, useExistingSocket = False, wait = True):
+        '''
+        Start color flow.
+
+        Example of a flow object:
+
+        flow = [
+            {
+                'duration': 30,
+                'mode':'rgb / white / sleep',
+                'red':0,
+                'green':0,
+                'blue':0,
+                'colortemp':0,
+                'brightness':0
+            }
+        ]
+        '''
+        final = []
+        for x in flow:
+            # if 'duration' not in x:
+            #     raise YeelightUnexcepted('No duration param. Invalid flow.')
+            # if 'mode'
+
+            assert 'duration' in x
+            assert 'mode' in x
+            assert 'brightness' in x
+
+            if x['duration'] <= 30:
+                x['duration'] = 30
+
+            final.append(str(x['duration']))
+            
+            if x['mode']=='rgb':
+                assert 'red' in x
+                assert 'green' in x
+                assert 'blue' in x
+                final.append(str(1)) # RGB
+                final.append(str(x['red']*65536 + x['green']*256 + x['blue'])) #Value
+            elif x['mode']=='white':
+                assert 'colortemp' in x
+                final.append(str(2))
+                final.append(str(x['colortemp']))
+            elif x['mode']=='sleep':
+                final.append(str(7))
+                final.append(str(0)) # Ignored
+            
+            final.append(str(x['brightness']))
+
+        strfinal = ', '.join(final)
+        return self._start_cf(count, action, strfinal, autoDisconnect = autoDisconnect, useExistingSocket = useExistingSocket, wait = wait)
+
 
 
 class YeelightDeviceConfiguration(YeelightBaseObject):

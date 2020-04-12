@@ -24,4 +24,38 @@ for x in a.discovered:
     x = a.discovered[x]
 
 print(x.get_prop(['rgb']))
-x.set_rgb(0, 153, 204)
+# x.set_power('on')
+# x.set_ct_abx(6300)
+# x.set_bright(100)
+# x.set_bright(1)
+# x.set_bright(100)
+# x.set_power('off')
+#     # x.set_rgb(16,79,162, duration = 2000)
+#     # x.set_rgb(230,79,162, duration = 2000)
+# x.toggle()
+# print(x.toggle())
+
+x.toggle()
+
+print(x.start_cf(10, 0, [
+    {
+        'duration':3000,
+        'mode':'rgb',
+        'red':255,
+        'green':0,
+        'blue':0,
+        'brightness':100
+    },{
+        'duration':3000,
+        'mode':'rgb',
+        'red':0,
+        'green':255,
+        'blue':0,
+        'brightness':50
+    },{
+        'duration':3000,
+        'mode':'white',
+        'colortemp':2700,
+        'brightness':100
+    }
+]))
