@@ -3,6 +3,7 @@ from flask import jsonify, request
 from functools import wraps
 import inspect
 import logger
+from base import YeelightDeviceException
 
 def r(code,**kw):
     kw['code'] = code
@@ -64,6 +65,10 @@ def auto(**req):
             for x in arguments:
                 if x not in argpass and x not in kw:
                     return r(-1, message='Missing argument: '+x)
-            return func(*args, **argpass, **kw)
+                
+            try:
+                return func(*args, **argpass, **kw)
+            except YeelightDeviceException as e:
+                return r(-2, message = 'Exception - '+str(e))
         return __auto
     return _auto
