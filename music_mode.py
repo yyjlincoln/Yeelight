@@ -42,7 +42,6 @@ x = nextDevice(mainctl)
 import random
 import time
 while True:
-    print('inloop')
-    x.set_rgb(random.randint(0,255),random.randint(0,255),random.randint(0,255), smooth = False, duration = 50)
+    x.set_rgb(random.randint(0,255),random.randint(0,255),random.randint(0,255), smooth = False, duration = 30)
 
 x.set_power('off')

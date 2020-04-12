@@ -9,7 +9,7 @@ discovered = a.discover()
 for x in discovered:
     x = discovered[x]
 
-x.set_power('off')
+# x.set_power('off')
 
 # import random
 # while True:
@@ -18,7 +18,7 @@ x.set_power('off')
 # x.set_power('off')
 # print(x.sendCommand('set_musi',[0]))
 # 
-print(x.set_music(1, '192.168.20.4',54302))
+# print(x.set_music(1, '192.168.20.4',54302))
 # print(x.get_prop(['music_on']))
 # print(x.set_music(0, None, None))
 
@@ -51,7 +51,8 @@ print(x.set_music(1, '192.168.20.4',54302))
 #     'count':2,
 #     'action':2
 # })
-
+x.set_music(0)
+# x.toggle()
 # print(x.start_cf(10, 0, [
 #     {
 #         'duration':3000,

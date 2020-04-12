@@ -203,18 +203,21 @@ class YeelightDevice(YeelightBaseObject):
                 s = useExistingSocket
 
         s.send(cmd.encode())
+        # Request sent.
 
-        # No response in musicMode, return.
 
         if self.musicMode:
+            # No response in musicMode, return.
+            time.sleep(0.001*wait)
             return None, s
 
+        # Await Response
         flag = False
         while True:
-            resd = s.recv(2048).decode().split('\r\n')
-            print(resd)
+            resd = s.recv(2048).decode().strip().split('\r\n')
+            # Read response. There might be multiple overlapping responses, therefore it have to be separated.
             for x in resd:
-                if x:
+                if x: # Ensure that the response is not empty
                     res = json.loads(x)
                     if 'id' in res:
                         flag = True
@@ -233,7 +236,7 @@ class YeelightDevice(YeelightBaseObject):
                 raise YeelightUnexcepted('ID Verification Failed.')
                 # return None, s
         
-        if autoDisconnect and not self.musicMode:
+        if autoDisconnect:
             s.shutdown(socket.SHUT_RDWR)
             s.close()
             s = None
@@ -494,7 +497,7 @@ class YeelightDevice(YeelightBaseObject):
     # adjust_color
     # bg_adjust_xx
 
-    def set_music(self, action, host, port, autoDisconnect = True, useExistingSocket = False, wait = True):
+    def set_music(self, action, host=None, port=None, autoDisconnect = True, useExistingSocket = False, wait = True):
         r, sx = self.sendCommand('set_music', [action, host, port], autoDisconnect=autoDisconnect, useExistingSocket=useExistingSocket, wait = 0 if wait else 0)       
 
         if r:
