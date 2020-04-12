@@ -308,9 +308,9 @@ class YeelightDevice(YeelightBaseObject):
                 return True, sx
         return False, sx
     
-    def start_cf(self, count, action, flow, autoDisconnect = True, useExistingSocket = False, wait = True):
+    def parse_flow(self, flow):
         '''
-        Start color flow.
+        Parse color flow object.
 
         Example of a flow object:
 
@@ -358,8 +358,89 @@ class YeelightDevice(YeelightBaseObject):
             final.append(str(x['brightness']))
 
         strfinal = ', '.join(final)
-        return self._start_cf(count, action, strfinal, autoDisconnect = autoDisconnect, useExistingSocket = useExistingSocket, wait = wait)
+        return strfinal
 
+    def start_cf(self, count, action, flow, autoDisconnect = True, useExistingSocket = False, wait = True):
+        flowparsed = self.parse_flow(flow)
+        return self._start_cf(count, action, flowparsed, autoDisconnect = autoDisconnect, useExistingSocket = useExistingSocket, wait = wait)
+    
+    def stop_cf(self, autoDisconnect = True, useExistingSocket = False, wait = True):
+        r, sx = self.sendCommand('stop_cf', [], autoDisconnect=autoDisconnect, useExistingSocket=useExistingSocket, wait = 0 if wait else 0)       
+
+        if r:
+            if r['result'][0] == 'ok':
+                return True, sx
+        return False, sx        
+    
+    def _set_scene(self, sclass, val1, val2, val3=None, autoDisconnect = True, useExistingSocket = False, wait = True):
+        if val3:
+            r, sx = self.sendCommand('set_scene', [sclass, val1, val2, val3], autoDisconnect=autoDisconnect, useExistingSocket=useExistingSocket, wait = 0 if wait else 0)
+        else:
+            r, sx = self.sendCommand('set_scene', [sclass, val1, val2], autoDisconnect=autoDisconnect, useExistingSocket=useExistingSocket, wait = 0 if wait else 0)
+
+        if r:
+            if r['result'][0] == 'ok':
+                return True, sx
+        return False, sx
+    
+    def parse_scene(self, scene):
+        '''
+        Process scene object
+
+        Example Scene:
+
+        scene = {
+            'class':'cf',
+            'flow':[
+                # Flow Object
+            ],
+            'count':10,
+            'action':0
+        }
+
+        scene = {
+            'class': 'color',
+            'red':255,
+            'green':255,
+            'blue':255,
+            'brightness':70
+        }
+
+
+        '''
+        assert 'class' in scene
+        if scene['class']=='color':
+            assert 'red' in scene
+            assert 'green' in scene
+            assert 'blue' in scene
+            assert 'brightness' in scene
+            r,g,b,br = scene['red'], scene['green'], scene['blue'], scene['brightness']
+            return scene['class'], r*65536 + g*256 + b, br, None
+        elif scene['class']=='hsv':
+            assert 'hue' in scene
+            assert 'sat' in scene
+            assert 'brightness' in scene
+            return scene['class'], scene['hue'], scene['sat'], scene['brightness']
+        elif scene['class']=='ct':
+            assert 'colortemp' in scene
+            assert 'brightness' in scene
+            return scene['class'], scene['colortemp'], scene['brightness'], None
+        elif scene['class']=='cf':
+            assert 'flow' in scene
+            assert 'count' in scene
+            assert 'action' in scene
+            flow = self.parse_flow(scene['flow'])
+            return scene['class'], scene['count'], scene['action'], flow
+        elif scene['class']=='auto_delay_off':
+            assert 'brightness' in scene
+            assert 'delay' in scene
+            return scene['class'], scene['brightness'], scene['delay'], None
+        else:
+            raise YeelightUnexcepted('Can not match class.')
+
+    def set_scene(self, scene,  autoDisconnect = True, useExistingSocket = False, wait = True):
+        sclass, val1, val2, val3 = self.parse_scene(scene)
+        return self._set_scene(sclass, val1, val2, val3, autoDisconnect = autoDisconnect, useExistingSocket = useExistingSocket, wait = wait)
 
 
 class YeelightDeviceConfiguration(YeelightBaseObject):
