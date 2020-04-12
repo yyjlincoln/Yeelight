@@ -52,7 +52,7 @@ class Discover(YeelightBaseObject):
                 break
         
         if self.response:
-            return self.discovered
+            return self.discovered.copy()
         else:
             return {}
     

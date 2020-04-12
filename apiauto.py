@@ -9,6 +9,11 @@ def r(code,**kw):
     return jsonify(kw)
 
 
+class MustHave():
+    def __init__(self):
+        pass
+
+
 def auto(**req):
     'Required arguments & default value'
     def _auto(func):
@@ -47,11 +52,18 @@ def auto(**req):
                     if request.values.get(x)!=None:
                         argpass[x] = _autoType(request.values.get(x))
                     else:
+                        if isinstance(req[x], MustHave):
+                            # This will then not substitute the value, and it will directly 
+                            # trigger the stuff below.
+                            break
                         logger.log(f'Substituted default value for argument {x}')
                         argpass[x] = req[x]
                 else:
                     logger.info(f'Argument {x} is defined in the requirement list but not defined as a parameter of the function.')
 
+            for x in arguments:
+                if x not in argpass and x not in kw:
+                    return r(-1, message='Missing argument: '+x)
             return func(*args, **argpass, **kw)
         return __auto
     return _auto
