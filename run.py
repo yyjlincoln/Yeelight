@@ -9,38 +9,20 @@ discovered = a.discover()
 for x in discovered:
     x = discovered[x]
 
-x.set_power('on')
-x.start_cf(0, 0, [
-        {
-            'duration': 3000,
-            'mode': 'rgb',
-            'red': 255,
-            'green': 0,
-            'blue': 0,
-            'brightness': 100
-        }, {
-            'duration': 3000,
-            'mode': 'rgb',
-            'red': 0,
-            'green': 255,
-            'blue': 0,
-            'brightness': 50
-        }, {
-            'duration': 3000,
-            'mode': 'white',
-            'colortemp': 2700,
-            'brightness': 100
-        }
-])
-time.sleep(20)
-x.stop_cf()
-x.set_rgb(255,255,0)
-x.set_bright(100)
-x.set_bright(1)
-x.set_bright(100)
-x.set_ct_abx(2700)
-x.set_ct_abx(5400)
 x.set_power('off')
+
+# import random
+# while True:
+#     x.set_rgb(random.randint(0,255),random.randint(0,255),random.randint(0,255), smooth = False, duration = 50)
+#     time.sleep(1)
+# x.set_power('off')
+# print(x.sendCommand('set_musi',[0]))
+# 
+print(x.set_music(1, '192.168.20.4',54302))
+# print(x.get_prop(['music_on']))
+# print(x.set_music(0, None, None))
+
+# x.set_power('off')
 
 # x.set_scene({
 #     'class': 'cf',

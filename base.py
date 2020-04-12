@@ -30,6 +30,9 @@ class YeelightDevice(YeelightBaseObject):
     def __init__(self, **kw):
         self.methods = []
         self.Location = ''
+        self.musicMode = False
+        self.musicCtl = None # This should be a socket object.
+        # On music mode, the connection will not be closed. Other connection params will be ignored.
         self.props = {
             'power': {
                 'argtype': str,
@@ -188,24 +191,49 @@ class YeelightDevice(YeelightBaseObject):
         })
         cmd += '\r\n'
 
-        # Initialize the connection
-        if not useExistingSocket:
-            s = self._connectToDevice()
+        # Choose the socket
+        if self.musicMode:
+            # Music
+            s = self.musicCtl
         else:
-            s = useExistingSocket
+            # Initialize the connection
+            if not useExistingSocket:
+                s = self._connectToDevice()
+            else:
+                s = useExistingSocket
 
         s.send(cmd.encode())
-        res = s.recv(2048)
-        res = json.loads(res.decode())
+
+        # No response in musicMode, return.
+
+        if self.musicMode:
+            return None, s
+
+        flag = False
+        while True:
+            resd = s.recv(2048).decode().split('\r\n')
+            print(resd)
+            for x in resd:
+                if x:
+                    res = json.loads(x)
+                    if 'id' in res:
+                        flag = True
+                        # Found a valid response in overlapping responses.
+                        break
+        
+            if flag:
+                break
+
+
         if autoIDVerification:
             assert 'id' in res
             if res['id'] != id:
-                s.shutdown(socket.SHUT_RDWR)
-                s.close()
+                # s.shutdown(socket.SHUT_RDWR)
+                # s.close()
                 raise YeelightUnexcepted('ID Verification Failed.')
                 # return None, s
-
-        if autoDisconnect:
+        
+        if autoDisconnect and not self.musicMode:
             s.shutdown(socket.SHUT_RDWR)
             s.close()
             s = None
@@ -457,7 +485,22 @@ class YeelightDevice(YeelightBaseObject):
     # Cron_get
     # Cron_del
     # Set_adjust
+    # Set_name
+    # bg_set_xx
+    # bg_toggle
+    # dev_toggle
+    # adjust_bright
+    # adjust_ct
+    # adjust_color
+    # bg_adjust_xx
 
+    def set_music(self, action, host, port, autoDisconnect = True, useExistingSocket = False, wait = True):
+        r, sx = self.sendCommand('set_music', [action, host, port], autoDisconnect=autoDisconnect, useExistingSocket=useExistingSocket, wait = 0 if wait else 0)       
+
+        if r:
+            if r['result'][0] == 'ok':
+                return True, sx
+        return False, sx
 class YeelightDeviceConfiguration(YeelightBaseObject):
     'The Configuration of a Device.'
     pass
