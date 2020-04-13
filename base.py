@@ -220,7 +220,8 @@ class YeelightDevice(YeelightBaseObject):
 
         if self.musicMode:
             # No response in musicMode, return.
-            time.sleep(0.001*wait)
+            if wait:
+                time.sleep(0.001*wait)
             return None, s
 
         # Await Response

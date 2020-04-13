@@ -5,13 +5,14 @@ class WifiBulb(YeelightDevice):
     # Refer to YeelightDevice class.
     def __init__(self, **kw):
         self.id = None
+        self.musicMode = False
         super().__init__(**kw)
 
     def __repr__(self):
-        return f'<Wifi Bulb Object: {str(self.id)}>'
+        return f'<Wifi Bulb Object: {str(self.id)}, Music {"ON" if self.musicMode else "OFF"}>'
 
     def __str__(self):
-        return f'<Wifi Bulb Object: {str(self.id)}>'
+        return f'<Wifi Bulb Object: {str(self.id)}, Music {"ON" if self.musicMode else "OFF"}>'
 
 
 class WifiBulbConfig(YeelightDeviceConfiguration):

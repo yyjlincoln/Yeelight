@@ -26,7 +26,7 @@ class MusicServer():
         # Accept connection
         if not isinstance(originalDevice, YeelightDevice):
             raise YeelightUnexcepted('Not a yeelight device.')
-
+        
         sx, addr = self.s.accept()
         print('Connection accepted.')
         o = WifiBulb(**originalDevice.__dict__)
