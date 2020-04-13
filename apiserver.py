@@ -181,5 +181,5 @@ def beCool(device):
         test.test()
     return r(0, message="cool")
 
-
-app.run(host='0.0.0.0')
+if __name__ == '__main__':
+    app.run(host='0.0.0.0')
