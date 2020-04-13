@@ -21,6 +21,8 @@ def discoverDevice(deviceConfig):
     lastDiscovery = Discover(deviceConfig)
     return lastDiscovery.discover()
 
+discoverDevice(WifiBulbConfig)
+
 
 @app.route('/discover')
 @auto(devicetype = 'wifibulb')
@@ -70,4 +72,14 @@ def set_colortemp(device, colortemp, smooth, duration):
         return r(0, result = st, message = 'success' if st else 'failed')
     return r(-1, message = 'Device not found')
 
-app.run()
+@app.route('/cool')
+@auto(device = MustHave())
+def beCool(device):
+    dev = getDeviceByID(device)
+
+    if dev:
+        import test
+        test.test()
+    return r(0, message = "cool")
+
+app.run(host='0.0.0.0')
